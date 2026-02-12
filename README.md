@@ -1,53 +1,43 @@
 > This project is a personal initiative focused on live coding music and reproducible environments.
 
-# marquis_tidal_prod — Tidal Cycles in Docker (Emacs + SuperDirt)
+# marquis_Strudel_prod — Strudel in Docker (local web app)
 
-`marquis_tidal_prod` provides a **portable, reproducible live coding environment** for **Tidal Cycles**, packaged with **SuperCollider/SuperDirt** and **Emacs + tidal-mode**, running inside **Docker** with host audio support via **PulseAudio**.
+`marquis_Strudel_prod` provides a **portable, reproducible local setup** for **Strudel** (live coding music in the browser), packaged inside **Docker** and exposed on **[http://127.0.0.1:4321](http://127.0.0.1:4321)**.
+
+Strudel runs as a local web app: you write patterns, hear audio, and see visual feedback (piano roll, scope, etc.) directly in the browser.
 
 ---
 
 ## 🌐 Project Overview
 
-**Goal:** Run Tidal Cycles without painful local setup by encapsulating the full stack in Docker (Tidal + SuperDirt + editor tooling + audio bridge).
+**Goal:** Run Strudel locally without installing Node/pnpm/tooling on the host—everything is containerized.
 
-**Users:** Live coders, developers, musicians, and anyone who wants a reliable Tidal setup on Linux.
+**Users:** Live coders, developers, musicians, and anyone who wants a reliable Strudel setup with a one-command startup.
 
 ### Key Features
 
-* Tidal Cycles REPL (ghci) for algorithmic composition
-* SuperCollider + SuperDirt audio engine
-* Emacs with `tidal-mode` for live coding workflow
-* Host audio output through PulseAudio (also works with PipeWire-Pulse)
-* Mounted working directory for `.tidal` files
-* Reproducible and portable Docker-based setup
+* Strudel served locally from a Docker container
+* Browser-based audio output + visualizers (piano roll, scope, etc.)
+* Simple workflow via Makefile (`build`, `run`, `logs`, `sh`, `clean`)
+* No host audio routing required (audio is handled by the browser)
 
-> Note: This project targets **Linux hosts** using PulseAudio (or PipeWire with PulseAudio compatibility).
+### How it works
 
-### Architecture
-
-**Containerized stack**
-
-* Docker
-* Tidal Cycles (Haskell / ghci)
-* SuperCollider + SuperDirt
-* Emacs (tidal-mode)
-* PulseAudio bridge (host ↔ container)
+* The Docker image clones Strudel from upstream
+* Installs dependencies with `pnpm`
+* Generates `doc.json` via `pnpm prestart` (needed for the editor tooling)
+* Starts the Strudel website dev server (Astro/Vite) on port **4321**
 
 ---
-
-<a id="quickstart-and-tests"></a>
 
 ## 🚀 Quickstart
 
 ### Prerequisites
 
-* Linux host
 * Docker installed and running
-* Working sound device available at `/dev/snd`
+* A web browser on the host
 
-### 1) Use the Makefile
-
-From the project root:
+### 1) Check available commands
 
 ```bash
 make help
@@ -59,44 +49,23 @@ make help
 make build
 ```
 
-Build without cache:
-
-```bash
-make build-c
-```
-
-### 3) Run the container (interactive)
+### 3) Run Strudel
 
 ```bash
 make run
 ```
 
-This starts an interactive container with:
+Then open:
 
-* audio device access (`--device /dev/snd`)
-* realtime-friendly settings (`--cap-add=sys_nice`, `--ulimit rtprio`, `--ulimit memlock`)
+* [http://127.0.0.1:4321](http://127.0.0.1:4321)
 
-### 4) One-shot commands
-
-Build → run → clean:
+Stop the container (in another terminal):
 
 ```bash
-make once
+make stop
 ```
 
-Same, without cache:
-
-```bash
-make once-c
-```
-
-### 5) Inspect and clean
-
-Show images and containers:
-
-```bash
-make show
-```
+### Useful commands
 
 Remove container + image:
 
@@ -106,24 +75,20 @@ make clean
 
 ---
 
-## 📑 Resources & AI Usage
+## 🧩 Notes
 
-### Documentation / References
-
-* [https://tidalcycles.org](https://tidalcycles.org)
-* [https://supercollider.github.io](https://supercollider.github.io)
-
-### AI usage
-
-I used AI tools to:
-
-* help structure documentation and project layout
-* validate Docker configuration and audio routing concepts
-* clarify Tidal Cycles, SuperCollider, and Emacs integration patterns
-* review explanations and ensure technical consistency
-
-I did **not** blindly copy-paste AI-generated code.
+* If your browser shows connection issues, prefer `127.0.0.1` over `localhost` (IPv6/proxy edge cases).
+* This uses a dev server (Astro). If you want a production image (build static + serve), we can add a `Dockerfile.prod`.
 
 ---
 
-> This is a personal project. No license is provided.
+## 📑 Resources & Upstream
+
+* Strudel (upstream project): [https://strudel.cc](https://strudel.cc)
+* Upstream repo (mirrors/moves may happen): [https://codeberg.org/uzu/strudel](https://codeberg.org/uzu/strudel)
+
+> Licensing: Strudel itself is licensed upstream (AGPL-3.0). If you distribute a derived image/service, make sure you comply with upstream terms.
+
+---
+
+> This is a personal project. No license is provided for this repository.

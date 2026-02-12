@@ -1,30 +1,28 @@
-IMAGE_NAME = tidal-image
-CONTAINER_NAME = tidal
+IMAGE := strudel-local
+CONTAINER := strudel-local
+PORT := 4321
 
-help: ## Affiche cette aide
-	@echo "Commandes disponibles :"
-	@grep -E '^[a-zA-Z0-9_-]+:.*?##' Makefile \
-	| awk 'BEGIN {FS=":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
+.PHONY: help build run stop restart logs sh clean
 
-build: ## Build l'image docker
-	docker build -t $(IMAGE_NAME) .
+help:
+	@echo "Targets:"
+	@echo "  build    Build the Docker image ($(IMAGE))"
+	@echo "  run      Run Strudel on http://127.0.0.1:$(PORT)"
+	@echo "  stop     Stop the running container"
+	@echo "  restart  Stop then run"
+	@echo "  clean    Remove container + image"
 
-build-c: ## Build sans cache
-	docker build --no-cache -t $(IMAGE_NAME) .
+build:
+	docker build -t $(IMAGE) .
 
-run: ## Run en interactif
-	docker run -it --name $(CONTAINER_NAME) --device /dev/snd --cap-add=sys_nice --ulimit rtprio=95 --ulimit memlock=-1 $(IMAGE_NAME) sh
+run:
+	@docker rm -f $(CONTAINER) >/dev/null 2>&1 || true
+	docker run --name $(CONTAINER) --rm -it -p $(PORT):4321 $(IMAGE)
 
-once: build run clean ## build + run + clean
+stop:
+	@docker rm -f $(CONTAINER) >/dev/null 2>&1 || true
 
-once-c: build-c run clean ## build-c + run + clean
+restart: stop run
 
-show: ## Montre les images et dockers present
-	docker image ls
-	docker ps -a
-
-clean: ## Supprime l'image et le docker
-	docker rm -f $(CONTAINER_NAME) 2>/dev/null || true
-	docker rmi $(IMAGE_NAME) 2>/dev/null || true
-
-.PHONY: help build build-c run once once-c show clean
+clean: stop
+	@docker rmi -f $(IMAGE) >/dev/null 2>&1 || true
