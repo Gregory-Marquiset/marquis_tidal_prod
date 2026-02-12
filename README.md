@@ -1,32 +1,52 @@
 > This project is a personal initiative focused on live coding music and reproducible environments.
 
-# marquis_Strudel_prod — Strudel in Docker (local web app)
+# marquis_strudel_prod — Strudel (Production) in Docker
 
-`marquis_Strudel_prod` provides a **portable, reproducible local setup** for **Strudel** (live coding music in the browser), packaged inside **Docker** and exposed on **[http://127.0.0.1:4321](http://127.0.0.1:4321)**.
+`marquis_strudel_prod` provides a **portable, reproducible production setup** for **Strudel**, fully containerized and served locally via **Docker + nginx**.
 
-Strudel runs as a local web app: you write patterns, hear audio, and see visual feedback (piano roll, scope, etc.) directly in the browser.
+The application is built at image creation time and served as static files. No dev server runs in production.
+
+Strudel is available at:
+
+[http://127.0.0.1:4321](http://127.0.0.1:4321)
 
 ---
 
 ## 🌐 Project Overview
 
-**Goal:** Run Strudel locally without installing Node/pnpm/tooling on the host—everything is containerized.
+**Goal:** Run Strudel locally in a clean, minimal, production-style container without installing Node, pnpm, or build tooling on the host.
 
-**Users:** Live coders, developers, musicians, and anyone who wants a reliable Strudel setup with a one-command startup.
+This image:
 
-### Key Features
+* Clones Strudel from upstream
+* Installs dependencies
+* Generates required documentation files (`doc.json`)
+* Builds the static website (Astro build)
+* Serves it via nginx
 
-* Strudel served locally from a Docker container
-* Browser-based audio output + visualizers (piano roll, scope, etc.)
-* Simple workflow via Makefile (`build`, `run`, `logs`, `sh`, `clean`)
-* No host audio routing required (audio is handled by the browser)
+Runtime is lightweight and contains **no Node.js tooling**.
 
-### How it works
+---
 
-* The Docker image clones Strudel from upstream
-* Installs dependencies with `pnpm`
-* Generates `doc.json` via `pnpm prestart` (needed for the editor tooling)
-* Starts the Strudel website dev server (Astro/Vite) on port **4321**
+## 🏗 Architecture
+
+Multi-stage Docker build:
+
+### Build stage
+
+* Base: `node:20-bookworm`
+* `pnpm install`
+* `pnpm prestart` (generates `doc.json`)
+* `pnpm -C website build`
+
+### Runtime stage
+
+* Base: `nginx:alpine`
+* Copies `/website/dist`
+* Serves static files on port 80
+* SPA fallback configured (`try_files ... /index.html`)
+
+Host port **4321** → Container port **80**
 
 ---
 
@@ -35,39 +55,47 @@ Strudel runs as a local web app: you write patterns, hear audio, and see visual 
 ### Prerequisites
 
 * Docker installed and running
-* A web browser on the host
+* A modern web browser
 
-### 1) Check available commands
+---
 
-```bash
-make help
-```
-
-### 2) Build the image
+### 1️⃣ Build the image
 
 ```bash
 make build
 ```
 
-### 3) Run Strudel
+---
+
+### 2️⃣ Run Strudel
 
 ```bash
 make run
 ```
 
-Then open:
+Open:
 
-* [http://127.0.0.1:4321](http://127.0.0.1:4321)
+[http://127.0.0.1:4321](http://127.0.0.1:4321)
 
-Stop the container (in another terminal):
+---
+
+### 3️⃣ Stop the container
 
 ```bash
 make stop
 ```
 
+---
+
 ### Useful commands
 
-Remove container + image:
+Follow logs:
+
+```bash
+make logs
+```
+
+Remove container and image:
 
 ```bash
 make clean
@@ -75,19 +103,40 @@ make clean
 
 ---
 
-## 🧩 Notes
+## 🎵 Live Coding Workflow
 
-* If your browser shows connection issues, prefer `127.0.0.1` over `localhost` (IPv6/proxy edge cases).
-* This uses a dev server (Astro). If you want a production image (build static + serve), we can add a `Dockerfile.prod`.
+This is a **production build**.
+
+You can:
+
+* Live code music inside the Strudel web interface
+* Use all visualizers (piano roll, scope, etc.)
+* Run fully offline once built
+
+You cannot:
+
+* Modify Strudel source code with hot reload
+* Use Astro dev server features
+
+If you need development mode (hot reload), a separate dev Docker setup would be required.
 
 ---
 
-## 📑 Resources & Upstream
+## 🧩 Notes
 
-* Strudel (upstream project): [https://strudel.cc](https://strudel.cc)
-* Upstream repo (mirrors/moves may happen): [https://codeberg.org/uzu/strudel](https://codeberg.org/uzu/strudel)
+* Prefer `127.0.0.1` over `localhost` if you encounter IPv6 or proxy issues.
+* This image rebuilds Strudel at build time. If upstream changes, rebuild the image.
+* Audio is handled entirely by the browser (no PulseAudio or host audio bridging required).
 
-> Licensing: Strudel itself is licensed upstream (AGPL-3.0). If you distribute a derived image/service, make sure you comply with upstream terms.
+---
+
+## 📦 Makefile Targets
+
+* `make build` → Build Docker image
+* `make run` → Run container on port 4321
+* `make stop` → Stop container
+* `make logs` → Follow logs
+* `make clean` → Remove container and image
 
 ---
 
